@@ -34,6 +34,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  hasHydrated: boolean;
 
   // Actions
   setToken: (token: string) => void;
@@ -44,6 +45,7 @@ interface AuthState {
   clearError: () => void;
   refreshUser: () => Promise<void>;
   fetchCaptcha: () => Promise<CaptchaResponse>;
+  setHasHydrated: (hydrated: boolean) => void;
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6969';
@@ -57,6 +59,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      hasHydrated: false,
 
       // Set token
       setToken: (token: string) => {
@@ -66,6 +69,11 @@ export const useAuthStore = create<AuthState>()(
       // Set user
       setUser: (user: User) => {
         set({ user });
+      },
+
+      // Set hasHydrated flag
+      setHasHydrated: (hydrated: boolean) => {
+        set({ hasHydrated: hydrated });
       },
 
       // Login
@@ -237,6 +245,9 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

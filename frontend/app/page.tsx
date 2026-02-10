@@ -1,32 +1,32 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuthStore } from '@/stores/useAuthStore'
 
 export default function Home() {
   const router = useRouter()
+  const { isAuthenticated, hasHydrated } = useAuthStore()
+  const [hasMounted, setHasMounted] = useState(false)
+
+  // Wait for client-side mount
+  useEffect(() => {
+    setHasMounted(true)
+  }, [])
 
   useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem('auth-storage')
-    if (!token) {
-      router.push('/login')
+    // Only redirect after hydration is complete
+    if (!hasHydrated || !hasMounted) {
       return
     }
 
-    try {
-      const parsed = JSON.parse(token)
-      if (!parsed?.state?.token) {
-        router.push('/login')
-        return
-      }
-    } catch {
+    // Redirect to chat if authenticated, otherwise to login
+    if (isAuthenticated) {
+      router.push('/chat/new')
+    } else {
       router.push('/login')
-      return
     }
-
-    router.push('/chat/new')
-  }, [router])
+  }, [isAuthenticated, hasHydrated, hasMounted, router])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">

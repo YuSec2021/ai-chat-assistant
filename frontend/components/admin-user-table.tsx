@@ -86,7 +86,8 @@ export default function AdminUserTable() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update subscription');
+        const errorData = await response.json().catch(() => ({ detail: 'Failed to update subscription' }));
+        throw new Error(errorData.detail || 'Failed to update subscription');
       }
 
       await fetchUsers();
@@ -111,7 +112,8 @@ export default function AdminUserTable() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to ban user');
+        const errorData = await response.json().catch(() => ({ detail: 'Failed to ban user' }));
+        throw new Error(errorData.detail || 'Failed to ban user');
       }
 
       await fetchUsers();
@@ -133,7 +135,8 @@ export default function AdminUserTable() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to unban user');
+        const errorData = await response.json().catch(() => ({ detail: 'Failed to unban user' }));
+        throw new Error(errorData.detail || 'Failed to unban user');
       }
 
       await fetchUsers();

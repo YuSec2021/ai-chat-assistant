@@ -87,7 +87,7 @@ async def update_user_info(
 
     Can update:
     - subscription_level: "free", "gold", or "diamond"
-    - is_banned: true or false
+    - is_banned: true or false (cannot ban yourself)
 
     Args:
         user_id: User UUID to update
@@ -98,13 +98,21 @@ async def update_user_info(
         Updated UserResponse
 
     Raises:
-        HTTPException: If user not found, trying to update self, or not admin
+        HTTPException: If user not found, trying to ban self, or not admin
     """
-    # Prevent admin from modifying themselves
-    if user_id == current_user.id:
+    # Check if user exists
+    target_user = await get_user_by_id(user_id)
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Prevent admin from banning themselves
+    if user_id == current_user.id and updates.is_banned is not None and updates.is_banned:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cannot modify your own account through admin API"
+            detail="Cannot ban your own account"
         )
 
     logger.info(
@@ -113,14 +121,6 @@ async def update_user_info(
         target_user_id=user_id,
         updates=updates.model_dump(exclude_unset=True)
     )
-
-    # Check if user exists
-    target_user = await get_user_by_id(user_id)
-    if not target_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
 
     # Build update dict
     update_data = {}

@@ -86,11 +86,18 @@ export const useAuthStore = create<AuthState>()(
             }),
           });
 
-          const data: AuthResponse = await response.json();
-
           if (!response.ok) {
-            throw new Error(data.detail || 'Login failed');
+            let errorMessage = 'Login failed';
+            try {
+              const errorData = await response.json();
+              errorMessage = errorData.detail || errorMessage;
+            } catch {
+              errorMessage = `Login failed (${response.status})`;
+            }
+            throw new Error(errorMessage);
           }
+
+          const data: AuthResponse = await response.json();
 
           set({
             token: data.access_token,
@@ -113,7 +120,10 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
 
         try {
-          const response = await fetch(`${API_BASE_URL}/auth/register`, {
+          const url = `${API_BASE_URL}/auth/register`;
+          console.log('Registering to:', url);
+
+          const response = await fetch(url, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -126,11 +136,23 @@ export const useAuthStore = create<AuthState>()(
             }),
           });
 
-          const data: AuthResponse = await response.json();
+          console.log('Response status:', response.status);
 
           if (!response.ok) {
-            throw new Error(data.detail || 'Registration failed');
+            let errorMessage = 'Registration failed';
+            try {
+              const errorData = await response.json();
+              errorMessage = errorData.detail || errorMessage;
+              console.error('Registration error:', errorData);
+            } catch {
+              errorMessage = `Registration failed (${response.status})`;
+              console.error('Registration failed with status:', response.status);
+            }
+            throw new Error(errorMessage);
           }
+
+          const data: AuthResponse = await response.json();
+          console.log('Registration successful:', data);
 
           set({
             token: data.access_token,
@@ -140,6 +162,7 @@ export const useAuthStore = create<AuthState>()(
             error: null,
           });
         } catch (error) {
+          console.error('Registration error:', error);
           set({
             isLoading: false,
             error: error instanceof Error ? error.message : 'Registration failed',

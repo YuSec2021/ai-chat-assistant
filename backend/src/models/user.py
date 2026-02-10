@@ -63,7 +63,7 @@ class UserCreate(BaseModel):
         max_length=100,
         description="Password (min 8 characters)"
     )
-    captcha_code: str = Field(default="", min_length=0, max_length=6, description="Captcha code (optional)")
+    captcha_code: str = Field(default="", min_length=0, max_length=6, description="Captcha code (optional, disabled for now)")
     captcha_id: str = Field(default="", description="Captcha session ID (optional)")
 
     @field_validator('username')
@@ -100,6 +100,9 @@ class UserCreate(BaseModel):
     @classmethod
     def validate_captcha(cls, v: str) -> str:
         """Validate captcha code format"""
+        # Allow empty string (captcha disabled)
+        if v == '':
+            return v
         if not re.match(r'^[A-Z0-9]+$', v.upper()):
             raise ValueError('Invalid captcha format')
         return v.upper()
@@ -126,6 +129,9 @@ class UserLogin(BaseModel):
     @classmethod
     def validate_captcha(cls, v: str) -> str:
         """Validate captcha code format"""
+        # Allow empty string (captcha disabled)
+        if v == '':
+            return v
         if not re.match(r'^[A-Z0-9]+$', v.upper()):
             raise ValueError('Invalid captcha format')
         return v.upper()

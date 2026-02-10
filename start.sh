@@ -70,16 +70,27 @@ trap cleanup SIGINT SIGTERM
 
 # Start backend
 cd "$BACKEND_DIR"
-echo "   Starting backend on http://localhost:6969"
-.venv/bin/python3 -m uvicorn src.main:app --host 0.0.0.0 --port 6969 --reload &
+echo "   Starting backend on http://localhost:6969 (with auto-reload)"
+echo "   Backend will automatically reload when Python files change"
+.venv/bin/python3 -m uvicorn src.main:app --host 0.0.0.0 --port 6969 --reload > /tmp/backend.log 2>&1 &
 BACKEND_PID=$!
 
 # Wait a moment for backend to start
 sleep 2
 
+# Check if backend started successfully
+if ps -p $BACKEND_PID > /dev/null; then
+    echo "   ✓ Backend started successfully (PID: $BACKEND_PID)"
+    echo "   → Backend logs: tail -f /tmp/backend.log"
+else
+    echo "   ✗ Backend failed to start. Check logs: cat /tmp/backend.log"
+    exit 1
+fi
+
 # Start frontend
 cd "$FRONTEND_DIR"
-echo "   Starting frontend on http://localhost:3000"
+echo "   Starting frontend on http://localhost:3000 (with hot-reload)"
+echo "   Frontend will automatically reload when files change"
 npm run dev &
 FRONTEND_PID=$!
 
@@ -89,6 +100,11 @@ echo ""
 echo "   📟 Backend API:  http://localhost:6969"
 echo "   📟 API Docs:     http://localhost:6969/docs"
 echo "   🎨 Frontend:     http://localhost:3000"
+echo ""
+echo "   🔥 Hot Reload Enabled:"
+echo "      • Backend: Auto-reloads on Python file changes"
+echo "      • Frontend: Auto-reloads on file changes (Next.js)"
+echo "      • Backend logs: tail -f /tmp/backend.log"
 echo ""
 echo "   Press Ctrl+C to stop all services"
 echo ""

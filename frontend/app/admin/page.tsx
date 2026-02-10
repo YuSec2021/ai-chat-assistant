@@ -2,6 +2,8 @@
  * Admin page - user management
  */
 
+'use client';
+
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';

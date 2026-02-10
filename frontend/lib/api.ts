@@ -48,7 +48,8 @@ export const api = {
       headers: getAuthHeaders()
     })
     if (!response.ok) {
-      throw new Error('Failed to fetch conversations')
+      const errorText = await response.text().catch(() => 'Unknown error')
+      throw new Error(`Failed to fetch conversations (${response.status}): ${errorText}`)
     }
     return response.json()
   },
@@ -58,7 +59,8 @@ export const api = {
       headers: getAuthHeaders()
     })
     if (!response.ok) {
-      throw new Error('Failed to fetch conversation')
+      const errorText = await response.text().catch(() => 'Unknown error')
+      throw new Error(`Failed to fetch conversation (${response.status}): ${errorText}`)
     }
     return response.json()
   },
@@ -92,7 +94,8 @@ export const api = {
       headers: getAuthHeaders()
     })
     if (!response.ok) {
-      throw new Error('Failed to delete conversation')
+      const errorText = await response.text().catch(() => 'Unknown error')
+      throw new Error(`Failed to delete conversation (${response.status}): ${errorText}`)
     }
   },
 
@@ -106,7 +109,8 @@ export const api = {
       body: JSON.stringify({ title }),
     })
     if (!response.ok) {
-      throw new Error('Failed to update conversation')
+      const errorText = await response.text().catch(() => 'Unknown error')
+      throw new Error(`Failed to update conversation (${response.status}): ${errorText}`)
     }
   },
 
@@ -121,7 +125,8 @@ export const api = {
     })
 
     if (!response.ok) {
-      throw new Error('Failed to upload file')
+      const errorText = await response.text().catch(() => 'Unknown error')
+      throw new Error(`Failed to upload file (${response.status}): ${errorText}`)
     }
 
     const data = await response.json()

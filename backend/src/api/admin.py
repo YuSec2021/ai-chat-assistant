@@ -9,7 +9,7 @@ import structlog
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(prefix="/admin", tags=["Admin"])
+router = APIRouter(prefix="/api/admin", tags=["Admin"])
 
 
 @router.get("/users", response_model=dict)

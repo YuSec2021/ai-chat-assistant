@@ -106,4 +106,8 @@ export class WebSocketClient {
   isConnected(): boolean {
     return this.ws !== null && this.ws.readyState === WebSocket.OPEN
   }
+
+  getConversationId(): string {
+    return this.conversationId
+  }
 }

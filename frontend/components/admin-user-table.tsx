@@ -248,20 +248,13 @@ export default function AdminUserTable() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex gap-2">
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                          user.is_active
-                            ? 'bg-green-500/10 text-green-400 border border-green-500/30'
-                            : 'bg-red-500/10 text-red-400 border border-red-500/30'
-                        }`}>
-                          {user.is_active ? 'Active' : 'Inactive'}
-                        </span>
-                        {user.is_banned && (
-                          <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-red-500/10 text-red-400 border border-red-500/30">
-                            Banned
-                          </span>
-                        )}
-                      </div>
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                        user.is_banned
+                          ? 'bg-red-500/10 text-red-400 border border-red-500/30'
+                          : 'bg-green-500/10 text-green-400 border border-green-500/30'
+                      }`}>
+                        {user.is_banned ? 'Banned' : 'Active'}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                       {new Date(user.created_at).toLocaleDateString()}

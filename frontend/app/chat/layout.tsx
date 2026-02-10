@@ -7,6 +7,7 @@ import { useAuthStore } from '@/stores/useAuthStore'
 import { api } from '@/lib/api'
 import ChatSidebar from '@/components/chat-sidebar'
 import ChatMain from '@/components/chat-main'
+import ChatHeader from '@/components/chat-header'
 
 export default function ChatLayout({
   children,
@@ -15,7 +16,7 @@ export default function ChatLayout({
 }) {
   const router = useRouter()
   const { isAuthenticated, token, hasHydrated } = useAuthStore()
-  const { setConversations } = useConversationStore()
+  const { setConversations, currentConversation } = useConversationStore()
   const [hasMounted, setHasMounted] = useState(false)
 
   // Wait for client-side mount
@@ -54,10 +55,10 @@ export default function ChatLayout({
   // Show loading while hydrating
   if (!hasHydrated || !hasMounted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
-          <p className="text-slate-400">Loading...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     )
@@ -71,7 +72,12 @@ export default function ChatLayout({
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <ChatSidebar />
-      <ChatMain>{children}</ChatMain>
+      <ChatMain>
+        {/* Global Header - always visible */}
+        <ChatHeader conversation={currentConversation} />
+        {/* Page content */}
+        {children}
+      </ChatMain>
     </div>
   )
 }

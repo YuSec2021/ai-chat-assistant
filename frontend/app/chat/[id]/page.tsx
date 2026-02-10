@@ -1,24 +1,27 @@
 "use client"
 
 import { useEffect, useRef, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useConversationStore } from '@/stores/use-conversation-store'
+import { api } from '@/lib/api'
 import { WebSocketClient } from '@/lib/websocket'
 import type { StreamChunk } from '@/lib/websocket'
 import ChatMessages from '@/components/chat-messages'
 import ChatInput from '@/components/chat-input'
-import ChatHeader from '@/components/chat-header'
 
 export default function ConversationPage() {
   const params = useParams()
-  const { conversations, setCurrentConversation, addMessage } = useConversationStore()
+  const router = useRouter()
+  const { conversations, tempConversation, setCurrentConversation, addMessage, addConversation, setTempConversation } = useConversationStore()
   const [isStreaming, setIsStreaming] = useState(false)
   const [streamingContent, setStreamingContent] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
   const wsRef = useRef<WebSocketClient | null>(null)
   const pendingMessageRef = useRef<{ messageId: string; content: string } | null>(null)
 
   const convId = params.id as string
-  const conversation = conversations.find(c => c.id === convId)
+  const isTempConv = convId === 'temp-new'
+  const conversation = isTempConv ? tempConversation : conversations.find(c => c.id === convId)
 
   // Set current conversation when it changes
   useEffect(() => {
@@ -29,6 +32,9 @@ export default function ConversationPage() {
 
   // Setup WebSocket connection when convId changes
   useEffect(() => {
+    // Don't setup WebSocket for temporary conversations
+    if (isTempConv) return
+
     // Cleanup on unmount or convId change
     return () => {
       if (wsRef.current) {
@@ -36,7 +42,7 @@ export default function ConversationPage() {
         wsRef.current = null
       }
     }
-  }, [convId])
+  }, [convId, isTempConv])
 
   // Handle pending message when streaming completes
   useEffect(() => {
@@ -50,14 +56,42 @@ export default function ConversationPage() {
           attachments: [],
           timestamp: new Date().toISOString(),
         }
-        addMessage(convId, assistantMessage)
+        // Use convId which might have been updated if it was a temp conversation
+        const actualConvId = wsRef.current?.getConversationId() || convId
+        addMessage(actualConvId, assistantMessage)
       }
       pendingMessageRef.current = null
     }
-  }, [isStreaming, convId, addMessage])
+  }, [isStreaming, addMessage])
 
   const handleSendMessage = async (content: string, attachments: string[] = []) => {
-    if (!conversation || isStreaming) return
+    if (!conversation || isStreaming || isSaving) return
+
+    let actualConvId = convId
+
+    // If this is a temporary conversation, save it to DB first
+    if (isTempConv && tempConversation) {
+      setIsSaving(true)
+      try {
+        const newConv = await api.createConversation()
+
+        // The API returns messages, so we need to add the current messages to the DB
+        // For now, let's reload conversations to get the latest state
+        const allConv = await api.listConversations()
+        addConversation(newConv)
+
+        // Update the actual conversation ID
+        actualConvId = newConv.id
+
+        // Navigate to the real conversation URL
+        router.replace(`/chat/${newConv.id}`)
+      } catch (error) {
+        console.error('Failed to save conversation:', error)
+        return
+      } finally {
+        setIsSaving(false)
+      }
+    }
 
     // 添加用户消息
     const userMessage = {
@@ -67,11 +101,11 @@ export default function ConversationPage() {
       attachments,
       timestamp: new Date().toISOString(),
     }
-    addMessage(convId, userMessage)
+    addMessage(actualConvId, userMessage)
 
     // 连接或复用 WebSocket
     if (!wsRef.current) {
-      wsRef.current = new WebSocketClient(convId)
+      wsRef.current = new WebSocketClient(actualConvId)
       wsRef.current.onMessage = (chunk: StreamChunk) => {
         if (chunk.content) {
           setStreamingContent((prev) => prev + chunk.content)
@@ -120,12 +154,11 @@ export default function ConversationPage() {
 
   return (
     <>
-      <ChatHeader conversation={conversation} />
       <ChatMessages
         messages={conversation.messages}
         streamingContent={isStreaming ? streamingContent : null}
       />
-      <ChatInput onSendMessage={handleSendMessage} disabled={isStreaming} />
+      <ChatInput onSendMessage={handleSendMessage} disabled={isStreaming || isSaving} />
     </>
   )
 }

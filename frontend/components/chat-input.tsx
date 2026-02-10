@@ -23,11 +23,9 @@ export default function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
-      if (message.trim()) {
-        textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`
-      } else {
-        textareaRef.current.style.height = 'auto'
-      }
+      // Set minimum height to show 2 lines visually (~80px)
+      const newHeight = Math.max(80, Math.min(textareaRef.current.scrollHeight, 200))
+      textareaRef.current.style.height = `${newHeight}px`
     }
   }, [message])
 
@@ -101,77 +99,70 @@ export default function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
       )}
 
       {/* Input Area */}
-      <div
-        className={cn(
-          "flex items-end gap-3 p-3 rounded-lg border-2 transition-colors",
-          isDragging ? 'border-primary bg-primary/5' : 'border-input'
-        )}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        {/* File Upload Button */}
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="p-2 hover:bg-accent rounded-lg transition-colors"
-          title={t('chat.attachments')}
-          disabled={disabled}
-        >
-          <Paperclip className="w-5 h-5 text-muted-foreground" />
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept=".pdf,image/*"
-          className="hidden"
-          onChange={handleFileSelect}
-          disabled={disabled}
-        />
-
-        {/* Text Input */}
-        <textarea
-          ref={textareaRef}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={t('chat.sendPlaceholder')}
-          className="flex-1 min-h-[44px] max-h-[200px] px-2 py-2 bg-transparent resize-none focus:outline-none text-sm leading-relaxed"
-          disabled={disabled}
-          rows={1}
-        />
-
-        {/* Send Button */}
-        <button
-          onClick={handleSend}
-          disabled={disabled || (!message.trim() && attachments.length === 0)}
+      <div className="max-w-4xl mx-auto">
+        <div
           className={cn(
-            "p-2 rounded-lg transition-colors",
-            (!message.trim() && attachments.length === 0) || disabled
-              ? 'bg-muted text-muted-foreground cursor-not-allowed'
-              : 'bg-primary text-primary-foreground hover:opacity-90'
+            "flex items-end gap-3 p-3 rounded-lg border-2 transition-colors",
+            isDragging ? 'border-primary bg-primary/5' : 'border-input'
           )}
-          title={t('chat.sendButton')}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
         >
-          <Send className="w-5 h-5" />
-        </button>
+          {/* File Upload Button */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="p-2 hover:bg-accent rounded-lg transition-colors"
+            title={t('chat.attachments')}
+            disabled={disabled}
+          >
+            <Paperclip className="w-5 h-5 text-muted-foreground" />
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".pdf,image/*"
+            className="hidden"
+            onChange={handleFileSelect}
+            disabled={disabled}
+          />
+
+          {/* Text Input */}
+          <textarea
+            ref={textareaRef}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={t('chat.sendPlaceholder')}
+            className="flex-1 min-h-[80px] max-h-[200px] px-2 py-2 bg-transparent resize-none focus:outline-none text-sm leading-relaxed"
+            disabled={disabled}
+            rows={2}
+          />
+
+          {/* Send Button */}
+          <button
+            onClick={handleSend}
+            disabled={disabled || (!message.trim() && attachments.length === 0)}
+            className={cn(
+              "p-2 rounded-lg transition-colors",
+              (!message.trim() && attachments.length === 0) || disabled
+                ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                : 'bg-primary text-primary-foreground hover:opacity-90'
+            )}
+            title={t('chat.sendButton')}
+          >
+            <Send className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Drag & Drop Hint */}
+        {isDragging && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg -z-10">
+            <p className="text-sm text-muted-foreground">Drop files here to attach</p>
+          </div>
+        )}
       </div>
-
-      {/* Drag & Drop Hint */}
-      {isDragging && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg -z-10">
-          <p className="text-sm text-muted-foreground">Drop files here to attach</p>
-        </div>
-      )}
-
-      {/* Character Counter */}
-      {message.length > 0 && (
-        <div className="mt-2 text-right">
-          <span className="text-xs text-muted-foreground">
-            {message.length} characters
-          </span>
-        </div>
-      )}
     </div>
   )
 }

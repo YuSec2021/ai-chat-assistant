@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Send, Paperclip, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { api } from '@/lib/api'
+import { useI18n } from '@/lib/i18n'
 
 interface ChatInputProps {
   onSendMessage: (content: string, attachments: string[]) => void
@@ -11,6 +12,7 @@ interface ChatInputProps {
 }
 
 export default function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
+  const { t } = useI18n()
   const [message, setMessage] = useState('')
   const [attachments, setAttachments] = useState<File[]>([])
   const [isDragging, setIsDragging] = useState(false)
@@ -21,7 +23,11 @@ export default function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`
+      if (message.trim()) {
+        textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`
+      } else {
+        textareaRef.current.style.height = 'auto'
+      }
     }
   }, [message])
 
@@ -108,7 +114,7 @@ export default function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
         <button
           onClick={() => fileInputRef.current?.click()}
           className="p-2 hover:bg-accent rounded-lg transition-colors"
-          title="Attach file (PDF, images)"
+          title={t('chat.attachments')}
           disabled={disabled}
         >
           <Paperclip className="w-5 h-5 text-muted-foreground" />
@@ -129,7 +135,7 @@ export default function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Send a message... (Press Enter to send, Shift+Enter for new line)"
+          placeholder={t('chat.sendPlaceholder')}
           className="flex-1 min-h-[44px] max-h-[200px] px-2 py-2 bg-transparent resize-none focus:outline-none text-sm leading-relaxed"
           disabled={disabled}
           rows={1}
@@ -145,7 +151,7 @@ export default function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
               ? 'bg-muted text-muted-foreground cursor-not-allowed'
               : 'bg-primary text-primary-foreground hover:opacity-90'
           )}
-          title="Send message (Enter)"
+          title={t('chat.sendButton')}
         >
           <Send className="w-5 h-5" />
         </button>

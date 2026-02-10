@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useConversationStore } from '@/stores/use-conversation-store'
 import { useAuthStore } from '@/stores/useAuthStore'
+import { useI18n } from '@/lib/i18n'
 import { api } from '@/lib/api'
 import { Plus, MessageSquare, Search, Trash2, Edit2, Check, X, LogOut, Shield } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -17,6 +18,7 @@ interface ChatSidebarProps {
 export default function ChatSidebar({ className }: ChatSidebarProps) {
   const { conversations, currentConversation, removeConversation, updateConversation } = useConversationStore()
   const { user, logout } = useAuthStore()
+  const { t } = useI18n()
   const [searchQuery, setSearchQuery] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
@@ -82,14 +84,42 @@ export default function ChatSidebar({ className }: ChatSidebarProps) {
 
   return (
     <div className={cn("w-72 bg-secondary border-r border-border flex flex-col", className)}>
-      {/* Header */}
+      {/* User Info - Top */}
+      {user && (
+        <div className="p-3 border-b border-border">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-base font-semibold truncate">{user.username}</p>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1 px-2 py-1 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition"
+              title={t('common.logout')}
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <MembershipBadge level={user.subscription_level} size="sm" />
+            {user.role === 'admin' && (
+              <Link
+                href="/admin"
+                className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 transition"
+              >
+                <Shield className="w-3 h-3" />
+                {t('chat.admin')}
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* New Chat Button */}
       <div className="p-3 border-b border-border">
         <button
           onClick={handleNewChat}
           className="w-full flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity text-sm font-medium"
         >
           <Plus className="w-4 h-4" />
-          <span>New chat</span>
+          <span>{t('sidebar.newChat')}</span>
         </button>
       </div>
 
@@ -99,7 +129,7 @@ export default function ChatSidebar({ className }: ChatSidebarProps) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search conversations..."
+            placeholder={t('sidebar.search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -111,7 +141,7 @@ export default function ChatSidebar({ className }: ChatSidebarProps) {
       <div className="flex-1 overflow-y-auto px-2 pb-2">
         {filteredConversations.length === 0 ? (
           <div className="text-center py-8 text-sm text-muted-foreground">
-            {searchQuery ? 'No conversations found' : 'No conversations yet'}
+            {searchQuery ? t('chat.noConversations') : t('chat.noConversations')}
           </div>
         ) : (
           filteredConversations.map((conv) => (
@@ -173,38 +203,6 @@ export default function ChatSidebar({ className }: ChatSidebarProps) {
           ))
         )}
       </div>
-
-      {/* User Info */}
-      {user && (
-        <div className="p-3 border-t border-border">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user.username}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <MembershipBadge level={user.subscription_level} size="sm" />
-                  {user.role === 'admin' && (
-                    <Link
-                      href="/admin"
-                      className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 transition"
-                    >
-                      <Shield className="w-3 h-3" />
-                      Admin
-                    </Link>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Logout</span>
-          </button>
-        </div>
-      )}
     </div>
   )
 }

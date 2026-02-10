@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useTheme } from 'next-themes'
 import { Moon, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import LanguageToggle from '@/components/language-toggle'
 
 interface ChatHeaderProps {
   conversation?: {
@@ -39,14 +40,17 @@ export default function ChatHeader({ conversation }: ChatHeaderProps) {
       <h1 className="text-base font-semibold truncate">
         {conversation?.title || 'AI Chat Assistant'}
       </h1>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={toggleTheme}
-        title={`Current theme: ${theme}`}
-      >
-        {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-      </Button>
+      <div className="flex items-center gap-2">
+        <LanguageToggle />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleTheme}
+          title={`Current theme: ${theme}`}
+        >
+          {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </Button>
+      </div>
     </div>
   )
 }

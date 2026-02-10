@@ -1,0 +1,102 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "logout": "Logout",
+    "login": "Sign In",
+    "register": "Create Account"
+  },
+  "login": {
+    "title": "AI Chat Assistant",
+    "subtitle": "Sign in to your account",
+    "username": "Username",
+    "usernamePlaceholder": "Enter your username",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "verificationCode": "Verification Code",
+    "codePlaceholder": "Enter code",
+    "signingIn": "Signing in...",
+    "signInButton": "Sign In",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign up",
+    "validation": {
+      "usernameRequired": "Username is required",
+      "usernameMinLength": "Username must be at least 3 characters",
+      "passwordRequired": "Password is required",
+      "passwordMinLength": "Password must be at least 8 characters",
+      "captchaRequired": "Captcha is required"
+    }
+  },
+  "register": {
+    "title": "AI Chat Assistant",
+    "subtitle": "Create your account",
+    "username": "Username",
+    "usernamePlaceholder": "3-20 characters, letters, numbers, _ only",
+    "password": "Password",
+    "passwordPlaceholder": "Min 8 chars, with uppercase, lowercase, and number",
+    "confirmPassword": "Confirm Password",
+    "confirmPasswordPlaceholder": "Re-enter your password",
+    "creatingAccount": "Creating account...",
+    "createButton": "Create Account",
+    "hasAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "validation": {
+      "usernameRequired": "Username is required",
+      "usernameMinLength": "Username must be at least 3 characters",
+      "usernameMaxLength": "Username must be less than 20 characters",
+      "usernameInvalid": "Username can only contain letters, numbers, and underscores",
+      "passwordRequired": "Password is required",
+      "passwordMinLength": "Password must be at least 8 characters",
+      "passwordUppercase": "Password must contain at least one uppercase letter",
+      "passwordLowercase": "Password must contain at least one lowercase letter",
+      "passwordNumber": "Password must contain at least one number",
+      "confirmPasswordRequired": "Please confirm your password",
+      "passwordMismatch": "Passwords do not match"
+    }
+  },
+  "chat": {
+    "newChat": "New Chat",
+    "searchPlaceholder": "Search conversations...",
+    "noConversations": "No conversations yet",
+    "startNewChat": "Start a new conversation",
+    "sendPlaceholder": "Type your message...",
+    "sendButton": "Send",
+    "attachments": "Attachments",
+    "admin": "Admin"
+  },
+  "sidebar": {
+    "newChat": "New Chat",
+    "search": "Search conversations...",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "lastWeek": "Last 7 days",
+    "older": "Older"
+  },
+  "membership": {
+    "free": "Free",
+    "gold": "Gold",
+    "diamond": "Diamond"
+  },
+  "admin": {
+    "title": "User Management",
+    "username": "Username",
+    "subscription": "Subscription",
+    "role": "Role",
+    "status": "Status",
+    "createdAt": "Created At",
+    "lastLogin": "Last Login",
+    "actions": "Actions",
+    "active": "Active",
+    "banned": "Banned",
+    "ban": "Ban",
+    "unban": "Unban",
+    "editSubscription": "Edit Subscription",
+    "searchPlaceholder": "Search users...",
+    "noUsersFound": "No users found"
+  }
+}

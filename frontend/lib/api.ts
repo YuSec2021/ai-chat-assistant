@@ -1,7 +1,7 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6969/api'
 
 // Helper to get auth headers
-function getAuthHeaders() {
+function getAuthHeaders(): Record<string, string> {
   if (typeof window === 'undefined') return {}
 
   const token = localStorage.getItem('auth-storage')
@@ -10,7 +10,10 @@ function getAuthHeaders() {
   try {
     const parsed = JSON.parse(token)
     const accessToken = parsed?.state?.token
-    return accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
+    if (accessToken) {
+      return { Authorization: `Bearer ${accessToken}` }
+    }
+    return {}
   } catch {
     return {}
   }

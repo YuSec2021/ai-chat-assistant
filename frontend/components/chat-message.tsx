@@ -53,9 +53,7 @@ function ChatMessageComponent({ message, isStreaming }: ChatMessageProps) {
                 // Custom code block styling
                 pre: ({ node, ...props }) => (
                   <div className="relative group">
-                    <pre {...props} className="bg-muted p-4 rounded-lg overflow-x-auto">
-                      {node}
-                    </pre>
+                    <pre {...props} className="bg-muted p-4 rounded-lg overflow-x-auto" />
                   </div>
                 ),
               }}

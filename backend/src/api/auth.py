@@ -36,7 +36,7 @@ async def register(user_data: UserCreate):
     Requirements:
     - Username: 3-20 characters, alphanumeric + underscore only
     - Password: Min 8 characters, must contain uppercase, lowercase, and number
-    - Valid captcha code required
+    - Valid captcha code (optional, if provided will be verified)
 
     Args:
         user_data: User registration data
@@ -47,13 +47,14 @@ async def register(user_data: UserCreate):
     Raises:
         HTTPException: If username exists, validation fails, or captcha invalid
     """
-    # Verify captcha first
-    if not captcha_generator.verify_captcha(user_data.captcha_id, user_data.captcha_code):
-        logger.warning("Registration failed: invalid captcha", username=user_data.username)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired captcha code"
-        )
+    # Verify captcha only if provided (captcha is now optional)
+    if user_data.captcha_code and user_data.captcha_id:
+        if not captcha_generator.verify_captcha(user_data.captcha_id, user_data.captcha_code):
+            logger.warning("Registration failed: invalid captcha", username=user_data.username)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired captcha code"
+            )
 
     # Check if username already exists
     existing_user = await get_user_by_username(user_data.username)

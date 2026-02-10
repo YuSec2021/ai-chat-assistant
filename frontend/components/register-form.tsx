@@ -17,10 +17,11 @@ export default function RegisterForm() {
     username: '',
     password: '',
     confirmPassword: '',
-    captchaCode: '',
+    captchaCode: '', // Reserved for future captcha implementation
   });
-  const [captchaId, setCaptchaId] = useState('');
-  const [captchaImage, setCaptchaImage] = useState('');
+  // Captcha states (commented out - not currently used)
+  // const [captchaId, setCaptchaId] = useState('');
+  // const [captchaImage, setCaptchaImage] = useState('');
   const [validationErrors, setValidationErrors] = useState<{
     username?: string;
     password?: string;
@@ -28,7 +29,8 @@ export default function RegisterForm() {
     captchaCode?: string;
   }>({});
 
-  // Load captcha on mount
+  // Load captcha on mount (commented out - not currently used)
+  /*
   useEffect(() => {
     loadCaptcha();
   }, []);
@@ -43,6 +45,7 @@ export default function RegisterForm() {
       console.error('Failed to load captcha:', error);
     }
   };
+  */
 
   const validateForm = () => {
     const errors: typeof validationErrors = {};
@@ -78,10 +81,12 @@ export default function RegisterForm() {
       errors.confirmPassword = 'Passwords do not match';
     }
 
-    // Captcha validation
+    // Captcha validation (commented out - not currently used)
+    /*
     if (!formData.captchaCode) {
       errors.captchaCode = 'Captcha is required';
     }
+    */
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -97,13 +102,14 @@ export default function RegisterForm() {
     }
 
     try {
-      await register(formData.username, formData.password, formData.captchaCode, captchaId);
+      // Pass empty string for captcha (disabled for now)
+      await register(formData.username, formData.password, '', '');
 
       // Registration successful, redirect to chat
       router.push('/chat');
     } catch (error) {
-      // Reload captcha on error
-      loadCaptcha();
+      // Error handling
+      console.error('Registration failed:', error);
     }
   };
 
@@ -205,7 +211,8 @@ export default function RegisterForm() {
               )}
             </div>
 
-            {/* Captcha */}
+            {/* Captcha - Commented out (not currently used) */}
+            {/*
             <div>
               <label htmlFor="captchaCode" className="block text-sm font-medium text-slate-300 mb-2">
                 Verification Code
@@ -242,6 +249,7 @@ export default function RegisterForm() {
                 <p className="mt-1 text-sm text-red-400">{validationErrors.captchaCode}</p>
               )}
             </div>
+            */}
 
             {/* Submit Button */}
             <button

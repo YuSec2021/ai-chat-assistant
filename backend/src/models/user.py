@@ -63,8 +63,8 @@ class UserCreate(BaseModel):
         max_length=100,
         description="Password (min 8 characters)"
     )
-    captcha_code: str = Field(..., min_length=4, max_length=6, description="Captcha code")
-    captcha_id: str = Field(..., description="Captcha session ID")
+    captcha_code: str = Field(default="", min_length=0, max_length=6, description="Captcha code (optional)")
+    captcha_id: str = Field(default="", description="Captcha session ID (optional)")
 
     @field_validator('username')
     @classmethod

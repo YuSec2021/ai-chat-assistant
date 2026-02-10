@@ -106,7 +106,7 @@ export default function RegisterForm() {
       await register(formData.username, formData.password, '', '');
 
       // Registration successful, redirect to chat
-      router.push('/chat');
+      router.push('/chat/new');
     } catch (error) {
       // Error handling
       console.error('Registration failed:', error);

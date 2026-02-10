@@ -81,7 +81,7 @@ export default function LoginForm() {
       await login(formData.username, formData.password, formData.captchaCode, captchaId);
 
       // Login successful, redirect to chat
-      router.push('/chat');
+      router.push('/chat/new');
     } catch (error) {
       // Reload captcha on error
       loadCaptcha();

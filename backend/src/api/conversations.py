@@ -1,12 +1,15 @@
-"""Conversations API endpoints"""
+"""Conversations API endpoints with user isolation"""
 
-import uuid
-from datetime import datetime
 from typing import List
-from fastapi import APIRouter, HTTPException
-from bson import ObjectId
-from src.db.mongo import get_database
+from fastapi import APIRouter, HTTPException, status, Depends
 from src.models.conversation import Conversation, ConversationCreate, ConversationUpdate
+from src.models.user import User
+from src.core.dependencies import get_current_user
+from src.db.mongo import (
+    get_user_conversations,
+    create_conversation,
+    get_conversation_for_user
+)
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -15,139 +18,226 @@ router = APIRouter(prefix="/api/conversations", tags=["conversations"])
 
 
 @router.get("", response_model=List[Conversation])
-async def list_conversations():
-    """List all conversations"""
+async def list_conversations(
+    skip: int = 0,
+    limit: int = 50,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    List all conversations for the current user.
 
-    db = await get_database()
+    Args:
+        skip: Number of conversations to skip
+        limit: Maximum number of conversations to return
+        current_user: Authenticated user
 
-    cursor = db.conversations.find().sort("updated_at", -1)
-    conversations = await cursor.to_list(length=100)
+    Returns:
+        List of conversations belonging to the user
+    """
+    logger.info("Fetching conversations", user_id=current_user.id)
 
-    # Remove _id field (we use 'id' field instead)
-    for conv in conversations:
-        if "_id" in conv:
-            del conv["_id"]
+    conversations = await get_user_conversations(
+        user_id=current_user.id,
+        skip=skip,
+        limit=limit
+    )
 
-    return conversations
+    return [Conversation(**conv) for conv in conversations]
 
 
-@router.post("", response_model=Conversation)
-async def create_conversation(data: ConversationCreate):
-    """Create a new conversation"""
+@router.post("", response_model=Conversation, status_code=status.HTTP_201_CREATED)
+async def create_new_conversation(
+    data: ConversationCreate,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Create a new conversation for the current user.
 
-    db = await get_database()
+    Args:
+        data: Conversation creation data
+        current_user: Authenticated user
 
-    conversation_id = str(uuid.uuid4())
-    conversation = {
-        "id": conversation_id,
-        "title": data.title,
-        "messages": [],
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow(),
-        "metadata": {}
-    }
+    Returns:
+        Created conversation
+    """
+    logger.info("Creating conversation", user_id=current_user.id, title=data.title)
 
-    await db.conversations.insert_one(conversation)
+    conversation = await create_conversation(
+        user_id=current_user.id,
+        title=data.title
+    )
 
-    logger.info("Conversation created", conv_id=conversation_id)
+    logger.info("Conversation created", conv_id=conversation["id"], user_id=current_user.id)
 
     return Conversation(**conversation)
 
 
 @router.get("/{conv_id}", response_model=Conversation)
-async def get_conversation(conv_id: str):
-    """Get a specific conversation"""
+async def get_conversation(
+    conv_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get a specific conversation (with user ownership check).
 
-    db = await get_database()
+    Args:
+        conv_id: Conversation UUID
+        current_user: Authenticated user
 
-    # First try to find by 'id' field (UUID), then by '_id' (ObjectId)
-    conversation = await db.conversations.find_one({"id": conv_id})
+    Returns:
+        Conversation if user has access
+
+    Raises:
+        HTTPException: If conversation not found or user doesn't have access
+    """
+    logger.info("Fetching conversation", conv_id=conv_id, user_id=current_user.id)
+
+    conversation = await get_conversation_for_user(conv_id, current_user.id)
+
     if not conversation:
-        try:
-            conversation = await db.conversations.find_one({"_id": ObjectId(conv_id)})
-        except Exception:
-            pass
-
-    if not conversation:
-        raise HTTPException(status_code=404, detail="Conversation not found")
-
-    # Remove _id field
-    if "_id" in conversation:
-        del conversation["_id"]
+        logger.warning("Conversation not found or access denied", conv_id=conv_id, user_id=current_user.id)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Conversation not found"
+        )
 
     return Conversation(**conversation)
 
 
 @router.delete("/{conv_id}")
-async def delete_conversation(conv_id: str):
-    """Delete a conversation"""
+async def delete_conversation(
+    conv_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Delete a conversation (with user ownership check).
 
-    db = await get_database()
+    Args:
+        conv_id: Conversation UUID
+        current_user: Authenticated user
 
-    try:
-        result = await db.conversations.delete_one({"_id": ObjectId(conv_id)})
-    except Exception:
-        result = await db.conversations.delete_one({"id": conv_id})
+    Returns:
+        Success message
+
+    Raises:
+        HTTPException: If conversation not found or user doesn't have access
+    """
+    logger.info("Deleting conversation", conv_id=conv_id, user_id=current_user.id)
+
+    # Check ownership first
+    conversation = await get_conversation_for_user(conv_id, current_user.id)
+    if not conversation:
+        logger.warning("Delete failed: conversation not found or access denied", conv_id=conv_id, user_id=current_user.id)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Conversation not found"
+        )
+
+    # Delete the conversation
+    from src.db.mongo import mongodb
+    db = mongodb.get_db()
+    result = await db.conversations.delete_one({
+        "id": conv_id,
+        "user_id": current_user.id
+    })
 
     if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Conversation not found"
+        )
 
-    logger.info("Conversation deleted", conv_id=conv_id)
+    logger.info("Conversation deleted", conv_id=conv_id, user_id=current_user.id)
 
     return {"message": "Conversation deleted"}
 
 
 @router.patch("/{conv_id}", response_model=Conversation)
-async def update_conversation(conv_id: str, data: ConversationUpdate):
-    """Update conversation title"""
+async def update_conversation(
+    conv_id: str,
+    data: ConversationUpdate,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Update conversation title (with user ownership check).
 
-    db = await get_database()
+    Args:
+        conv_id: Conversation UUID
+        data: Update data
+        current_user: Authenticated user
 
+    Returns:
+        Updated conversation
+
+    Raises:
+        HTTPException: If conversation not found or user doesn't have access
+    """
+    logger.info("Updating conversation", conv_id=conv_id, user_id=current_user.id)
+
+    # Check ownership first
+    conversation = await get_conversation_for_user(conv_id, current_user.id)
+    if not conversation:
+        logger.warning("Update failed: conversation not found or access denied", conv_id=conv_id, user_id=current_user.id)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Conversation not found"
+        )
+
+    # Update the conversation
+    from src.db.mongo import mongodb
+    from datetime import datetime
+
+    db = mongodb.get_db()
     update_data = {"updated_at": datetime.utcnow()}
     if data.title is not None:
         update_data["title"] = data.title
 
-    # First try to find by 'id' field (UUID), then by '_id' (ObjectId)
     result = await db.conversations.update_one(
-        {"id": conv_id},
+        {"id": conv_id, "user_id": current_user.id},
         {"$set": update_data}
     )
 
     if result.matched_count == 0:
-        try:
-            result = await db.conversations.update_one(
-                {"_id": ObjectId(conv_id)},
-                {"$set": update_data}
-            )
-        except Exception:
-            pass
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Conversation not found"
+        )
 
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+    # Fetch updated conversation
+    updated_conversation = await get_conversation_for_user(conv_id, current_user.id)
 
-    conversation = await db.conversations.find_one({"id": conv_id})
-    if not conversation:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+    logger.info("Conversation updated", conv_id=conv_id, user_id=current_user.id)
 
-    # Remove _id field
-    if "_id" in conversation:
-        del conversation["_id"]
-
-    return Conversation(**conversation)
+    return Conversation(**updated_conversation)
 
 
 @router.get("/{conv_id}/messages", response_model=List[dict])
-async def get_messages(conv_id: str):
-    """Get all messages from a conversation"""
+async def get_messages(
+    conv_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get all messages from a conversation (with user ownership check).
 
-    db = await get_database()
+    Args:
+        conv_id: Conversation UUID
+        current_user: Authenticated user
 
-    try:
-        conversation = await db.conversations.find_one({"_id": ObjectId(conv_id)})
-    except Exception:
-        conversation = await db.conversations.find_one({"id": conv_id})
+    Returns:
+        List of messages
+
+    Raises:
+        HTTPException: If conversation not found or user doesn't have access
+    """
+    logger.info("Fetching messages", conv_id=conv_id, user_id=current_user.id)
+
+    conversation = await get_conversation_for_user(conv_id, current_user.id)
 
     if not conversation:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+        logger.warning("Messages fetch failed: conversation not found or access denied", conv_id=conv_id, user_id=current_user.id)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Conversation not found"
+        )
 
     return conversation.get("messages", [])

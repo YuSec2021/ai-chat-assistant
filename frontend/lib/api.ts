@@ -1,5 +1,21 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6969/api'
 
+// Helper to get auth headers
+function getAuthHeaders() {
+  if (typeof window === 'undefined') return {}
+
+  const token = localStorage.getItem('auth-storage')
+  if (!token) return {}
+
+  try {
+    const parsed = JSON.parse(token)
+    const accessToken = parsed?.state?.token
+    return accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
+  } catch {
+    return {}
+  }
+}
+
 export interface Message {
   id: string
   role: 'user' | 'assistant' | 'system'
@@ -28,7 +44,9 @@ export interface CreateConversationResponse {
 
 export const api = {
   async listConversations(): Promise<Conversation[]> {
-    const response = await fetch(`${API_BASE_URL}/conversations`)
+    const response = await fetch(`${API_BASE_URL}/conversations`, {
+      headers: getAuthHeaders()
+    })
     if (!response.ok) {
       throw new Error('Failed to fetch conversations')
     }
@@ -36,7 +54,9 @@ export const api = {
   },
 
   async getConversation(id: string): Promise<Conversation> {
-    const response = await fetch(`${API_BASE_URL}/conversations/${id}`)
+    const response = await fetch(`${API_BASE_URL}/conversations/${id}`, {
+      headers: getAuthHeaders()
+    })
     if (!response.ok) {
       throw new Error('Failed to fetch conversation')
     }
@@ -46,7 +66,10 @@ export const api = {
   async createConversation(): Promise<Conversation> {
     const response = await fetch(`${API_BASE_URL}/conversations`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
       body: JSON.stringify({}),
     })
     if (!response.ok) {
@@ -66,6 +89,7 @@ export const api = {
   async deleteConversation(id: string): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/conversations/${id}`, {
       method: 'DELETE',
+      headers: getAuthHeaders()
     })
     if (!response.ok) {
       throw new Error('Failed to delete conversation')
@@ -75,7 +99,10 @@ export const api = {
   async updateConversation(id: string, title: string): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/conversations/${id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
       body: JSON.stringify({ title }),
     })
     if (!response.ok) {
@@ -89,6 +116,7 @@ export const api = {
 
     const response = await fetch(`${API_BASE_URL}/upload`, {
       method: 'POST',
+      headers: getAuthHeaders(),
       body: formData,
     })
 

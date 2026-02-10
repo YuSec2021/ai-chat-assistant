@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from src.config import settings
 from src.db.mongo import mongodb, init_db
-from src.api import chat, conversations, upload
+from src.api import chat, conversations, upload, auth, admin
 from src.agents import agent_registry
 from src.utils.logger import configure_logging
 import structlog
@@ -55,6 +55,8 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(auth.router)
+app.include_router(admin.router)
 app.include_router(chat.router)
 app.include_router(conversations.router)
 app.include_router(upload.router)

@@ -71,7 +71,7 @@ trap cleanup SIGINT SIGTERM
 # Start backend
 cd "$BACKEND_DIR"
 echo "   Starting backend on http://localhost:6969"
-uv run uvicorn src.main:app --host 0.0.0.0 --port 6969 --reload &
+.venv/bin/python3 -m uvicorn src.main:app --host 0.0.0.0 --port 6969 --reload &
 BACKEND_PID=$!
 
 # Wait a moment for backend to start

@@ -2,10 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useConversationStore } from '@/stores/use-conversation-store'
+import { useAuthStore } from '@/stores/useAuthStore'
 import { api } from '@/lib/api'
-import { Plus, MessageSquare, Search, Trash2, Edit2, Check, X } from 'lucide-react'
+import { Plus, MessageSquare, Search, Trash2, Edit2, Check, X, LogOut, Shield } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import MembershipBadge from '@/components/membership-badge'
 
 interface ChatSidebarProps {
   className?: string
@@ -13,10 +16,16 @@ interface ChatSidebarProps {
 
 export default function ChatSidebar({ className }: ChatSidebarProps) {
   const { conversations, currentConversation, removeConversation, updateConversation } = useConversationStore()
+  const { user, logout } = useAuthStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const router = useRouter()
+
+  const handleLogout = () => {
+    logout()
+    router.push('/login')
+  }
 
   const filteredConversations = conversations.filter((conv) =>
     conv.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -164,6 +173,38 @@ export default function ChatSidebar({ className }: ChatSidebarProps) {
           ))
         )}
       </div>
+
+      {/* User Info */}
+      {user && (
+        <div className="p-3 border-t border-border">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{user.username}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <MembershipBadge level={user.subscription_level} size="sm" />
+                  {user.role === 'admin' && (
+                    <Link
+                      href="/admin"
+                      className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 transition"
+                    >
+                      <Shield className="w-3 h-3" />
+                      Admin
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Logout</span>
+          </button>
+        </div>
+      )}
     </div>
   )
 }

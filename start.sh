@@ -1,6 +1,30 @@
 #!/bin/bash
 
 # AI Chat Assistant Start Script
+# Usage: ./start.sh [backend|frontend] [port]
+#   backend - Start backend on specified port (default: 6969)
+#   frontend - Start frontend on specified port (default: 3000)
+#   [port] - Port number to use for the service
+# Examples:
+#   ./start.sh backend 8001      # Backend on port 8001, frontend on 3000
+#   ./start.sh frontend 8080      # Backend on 6969, frontend on 8080
+#   ./start.sh 8080           # Frontend only on port 8080
+
+# Show usage if no arguments or invalid arguments
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 [backend|frontend] [port]"
+    echo ""
+    echo "Arguments:"
+    echo "  backend      - Start backend service only (default port: $DEFAULT_BACKEND_PORT)"
+    echo "  frontend      - Start frontend service only (default port: $DEFAULT_FRONTEND_PORT)"
+    echo "  [port]        - Custom port for the service"
+    echo ""
+    echo "Examples:"
+    echo "  $0 backend 8001          # Backend on port 8001, frontend on 3000"
+    echo "  $0 frontend 8080          # Frontend only on port 8080"
+    echo "  $0 8080                   # Backend on 6969, frontend on 8080"
+    exit 0
+fi
 
 set -e
 
@@ -9,11 +33,31 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BACKEND_DIR="$SCRIPT_DIR/backend"
 FRONTEND_DIR="$SCRIPT_DIR/frontend"
 
+# Default ports
+DEFAULT_BACKEND_PORT=6969
+DEFAULT_FRONTEND_PORT=3000
+
+# Parse command line arguments
+SERVICE=${1:-}
+BACKEND_PORT=${2:-$DEFAULT_BACKEND_PORT}
+FRONTEND_PORT=${3:-$DEFAULT_FRONTEND_PORT}
+
+# Validate port numbers
+if ! [[ "$BACKEND_PORT" =~ ^[0-9]+$ ]]; then
+    echo "❌ Error: Backend port must be a number (got: '$BACKEND_PORT')"
+    exit 1
+fi
+
+if ! [[ "$FRONTEND_PORT" =~ ^[0-9]+$ ]]; then
+    echo "❌ Error: Frontend port must be a number (got: '$FRONTEND_PORT')"
+    exit 1
+fi
+
 echo "🚀 Starting AI Chat Assistant..."
 echo ""
 
 # === Backend Setup ===
-echo "📦 Setting up backend..."
+echo "📦 Setting up backend on port $BACKEND_PORT..."
 
 # Check if uv is installed
 if ! command -v uv &> /dev/null; then
@@ -41,7 +85,7 @@ fi
 cd "$FRONTEND_DIR"
 if [ ! -d "node_modules" ] || [ ! -f "node_modules/.bin/next" ]; then
     echo "   Installing npm dependencies..."
-    npm install
+    PORT=$FRONTEND_PORT npm install
 else
     echo "   ✓ Frontend dependencies already installed"
 fi
@@ -97,14 +141,16 @@ FRONTEND_PID=$!
 echo ""
 echo "✅ Services started!"
 echo ""
-echo "   📟 Backend API:  http://localhost:6969"
-echo "   📟 API Docs:     http://localhost:6969/docs"
-echo "   🎨 Frontend:     http://localhost:3000"
+echo "   📟 Backend API:  http://localhost:$BACKEND_PORT"
+echo "   📟 API Docs:     http://localhost:$BACKEND_PORT/docs"
+echo "   📟 Frontend:     http://localhost:$FRONTEND_PORT"
 echo ""
 echo "   🔥 Hot Reload Enabled:"
-echo "      • Backend: Auto-reloads on Python file changes"
-echo "      • Frontend: Auto-reloads on file changes (Next.js)"
+echo "      • Backend: Auto-reloads on Python file changes (port $BACKEND_PORT)"
+echo "      • Frontend: Auto-reloads on file changes (Next.js) (port $FRONTEND_PORT)"
 echo "      • Backend logs: tail -f /tmp/backend.log"
+echo "      • Usage: ./start.sh [backend|frontend] [port]"
+echo "      • Example: ./start.sh backend 8001 frontend 4000"
 echo ""
 echo "   Press Ctrl+C to stop all services"
 echo ""

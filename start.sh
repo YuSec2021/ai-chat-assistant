@@ -101,12 +101,29 @@ echo ""
 cleanup() {
     echo ""
     echo "🛑 Stopping services..."
+
+    # Kill processes more gracefully with proper termination
     if [ ! -z "$BACKEND_PID" ]; then
-        kill $BACKEND_PID 2>/dev/null || true
+        # Send SIGTERM to allow graceful shutdown
+        kill -TERM $BACKEND_PID 2>/dev/null || true
+        # Wait for process to actually terminate
+        for i in {1..10}; do
+            if ! kill -0 $BACKEND_PID 2>/dev/null; then
+                break
+            fi
+        done
     fi
     if [ ! -z "$FRONTEND_PID" ]; then
-        kill $FRONTEND_PID 2>/dev/null || true
+        # Send SIGTERM to allow graceful shutdown
+        kill -TERM $FRONTEND_PID 2>/dev/null || true
+        # Wait for process to actually terminate
+        for i in {1..10}; do
+            if ! kill -0 $FRONTEND_PID 2>/dev/null; then
+                break
+            fi
+        done
     fi
+
     echo "✓ All services stopped"
     exit 0
 }

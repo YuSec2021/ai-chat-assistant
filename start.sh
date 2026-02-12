@@ -23,6 +23,8 @@ if [ $# -eq 0 ]; then
     echo "  $0 backend 8001          # Backend on port 8001, frontend on 3000"
     echo "  $0 frontend 8080          # Frontend only on port 8080"
     echo "  $0 8080                   # Backend on 6969, frontend on 8080"
+    echo "  [backend|frontend] [port]    # Specify custom port for backend or frontend"
+    echo "  Example: ./start.sh frontend 8080    # Frontend on port 8080 (backend uses default 6969)"
     exit 0
 fi
 
@@ -133,9 +135,9 @@ fi
 
 # Start frontend
 cd "$FRONTEND_DIR"
-echo "   Starting frontend on http://localhost:3000 (with hot-reload)"
+echo "   Starting frontend on http://localhost:$FRONTEND_PORT (with hot-reload)"
 echo "   Frontend will automatically reload when files change"
-npm run dev &
+PORT=$FRONTEND_PORT npm run dev &
 FRONTEND_PID=$!
 
 echo ""
